@@ -225,19 +225,8 @@ class Controller extends \Piwik\Plugin\Controller
             "User-Agent: LoginOIDC-Matomo-Plugin"
         ));
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-
-        $tokenURL = parse_url($settings->tokenUrl->getValue());
-
-        if (!empty($settings->internalUrl->getValue())){
-          $internalURL = parse_url($settings->internalUrl->getValue());
-
-          $tokenUrlValue = str_replace($tokenURL["scheme"], $internalURL["scheme"], $settings->tokenUrl->getValue());
-          $tokenUrlValue = str_replace($tokenURL["port"], "", $tokenUrlValue);
-          $tokenUrlValue = str_replace($tokenURL["host"], $internalURL["host"] . ":" . $internalURL["port"], $tokenUrlValue);
-        }
-
-        curl_setopt($curl, CURLOPT_URL, $tokenUrlValue);
-
+        curl_setopt($curl, CURLOPT_URL, $this->switchURL($settings->tokenUrl->getValue()));
+        
         // request authorization token
         $response = curl_exec($curl);
         curl_close($curl);
@@ -257,18 +246,7 @@ class Controller extends \Piwik\Plugin\Controller
             "User-Agent: LoginOIDC-Matomo-Plugin"
         ));
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-
-        $userinfoURL = parse_url($settings->userinfoUrl->getValue());
-
-        if (!empty($settings->internalUrl->getValue())){
-          $internalURL = parse_url($settings->internalUrl->getValue());
-
-          $userInfoURLValue = str_replace($tokenURL["scheme"], $internalURL["scheme"], $settings->userinfoUrl->getValue());
-          $userInfoURLValue = str_replace($tokenURL["port"], "", $userInfoURLValue);
-          $userInfoURLValue = str_replace($tokenURL["host"], $internalURL["host"] . ":" . $internalURL["port"], $userInfoURLValue);
-        }
-
-        curl_setopt($curl, CURLOPT_URL, $userInfoURLValue);
+        curl_setopt($curl, CURLOPT_URL, $this->switchURL($settings->userinfoUrl->getValue()));
 
         // request remote userinfo and remote user id
         $response = curl_exec($curl);
@@ -508,4 +486,32 @@ class Controller extends \Piwik\Plugin\Controller
         return Db::fetchRow($sql, array($provider, Piwik::getCurrentUserLogin()));
     }
 
+    /**
+     * Switch from Public URL to Internal URL
+     * 
+     * @param  string  $url
+     * @return string
+     */
+    private function switchURL(string $url) : string{
+        $settings = new \Piwik\Plugins\LoginOIDC\SystemSettings();
+        $baseValues = parse_url($url);
+
+        if (empty($settings->internalUrl->getValue())){
+          return $url;
+        }
+      
+        $internalURL = parse_url($settings->internalUrl->getValue());
+
+        $urlBase = str_replace($baseValues["scheme"], $internalURL["scheme"], $url);
+
+        if (!empty($baseValues["port"])){
+          $urlBase = str_replace($baseValues["port"], "", $urlBase);
+        }
+        
+        if (!empty($baseValues["host"])){
+          $urlBase = str_replace($baseValues["host"], $internalURL["host"] . ":" . $internalURL["port"], $urlBase);
+        }
+
+        return $urlBase;
+    }
 }
