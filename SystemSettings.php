@@ -98,6 +98,13 @@ class SystemSettings extends \Piwik\Settings\Plugin\SystemSettings
     public $endSessionUrl;
 
     /**
+     * The internal url if the OIDC provider is behind a reverse proxy.
+     *
+     * @var string
+     */
+    public $internalUrl;
+
+    /**
      * The name of the unique user id field in $userinfoUrl response.
      *
      * @var string
@@ -157,6 +164,7 @@ class SystemSettings extends \Piwik\Settings\Plugin\SystemSettings
         $this->tokenUrl = $this->createTokenUrlSetting();
         $this->userinfoUrl = $this->createUserinfoUrlSetting();
         $this->endSessionUrl = $this->createEndSessionUrlSetting();
+        $this->internalUrl = $this->createInternalUrlSetting();
         $this->userinfoId = $this->createUserinfoIdSetting();
         $this->clientId = $this->createClientIdSetting();
         $this->clientSecret = $this->createClientSecretSetting();
@@ -318,6 +326,20 @@ class SystemSettings extends \Piwik\Settings\Plugin\SystemSettings
         return $this->makeSetting("endSessionUrl", $default = "", FieldConfig::TYPE_STRING, function(FieldConfig $field) {
             $field->title = Piwik::translate("LoginOIDC_SettingEndSessionUrl");
             $field->description = Piwik::translate("LoginOIDC_SettingEndSessionUrlHelp");
+            $field->uiControl = FieldConfig::UI_CONTROL_URL;
+        });
+    }
+
+    /**
+     * Add internal url setting.
+     * 
+     * @return SystemSetting
+     */
+    private function createInternalUrlSetting() : SystemSetting
+    {
+        return $this->makeSetting("internalUrl", $default = "", FieldConfig::TYPE_STRING, function(FieldConfig $field) {
+            $field->title = Piwik::translate("LoginOIDC_SettingInternalUrl");
+            $field->description = Piwik::translate("LoginOIDC_SettingInternalUrlHelp");
             $field->uiControl = FieldConfig::UI_CONTROL_URL;
         });
     }
